@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>围棋入门小游戏</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --bg: #fff8dc;
+      --panel: #fffdf5;
+      --panel-strong: #e8fbf3;
+      --ink: #36424a;
+      --muted: #6f7b82;
+      --line: #78b8a6;
+      --board: #bff1d8;
+      --board-dark: #6fc9b7;
+      --accent: #5bc6d8;
+      --accent-dark: #259aaa;
+      --danger: #ff8a9a;
+      --shadow: 0 18px 32px rgba(73, 139, 143, 0.16);
+      --soft-shadow: 0 8px 18px rgba(73, 139, 143, 0.12);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 14%, rgba(255, 224, 122, 0.42), transparent 9rem),
+        radial-gradient(circle at 86% 12%, rgba(139, 218, 255, 0.36), transparent 12rem),
+        radial-gradient(circle at 78% 84%, rgba(255, 167, 191, 0.22), transparent 13rem),
+        linear-gradient(135deg, #fff9d9 0%, #eefcf7 45%, #eaf7ff 100%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.72;
+    }
+
+    body::before {
+      width: 180px;
+      height: 70px;
+      left: -34px;
+      top: 82px;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 30% 50%, #fff 0 34px, transparent 35px),
+        radial-gradient(circle at 54% 38%, #fff 0 42px, transparent 43px),
+        radial-gradient(circle at 75% 54%, #fff 0 32px, transparent 33px);
+      filter: drop-shadow(0 10px 14px rgba(99, 170, 194, 0.12));
+    }
+
+    body::after {
+      right: 22px;
+      top: 34px;
+      width: 150px;
+      height: 150px;
+      background:
+        radial-gradient(circle, #ffd86f 0 7px, transparent 8px) 20px 34px / 42px 42px,
+        radial-gradient(circle, #83d7ff 0 6px, transparent 7px) 86px 10px / 48px 48px,
+        radial-gradient(circle, #ff9ab0 0 5px, transparent 6px) 100px 92px / 44px 44px;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .app::before,
+    .app::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .app::before {
+      width: 74px;
+      height: 74px;
+      right: 370px;
+      top: 86px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 24%, #fff 0 7px, transparent 8px),
+        radial-gradient(circle at 50% 76%, #fff 0 7px, transparent 8px),
+        radial-gradient(circle at 24% 50%, #fff 0 7px, transparent 8px),
+        radial-gradient(circle at 76% 50%, #fff 0 7px, transparent 8px),
+        #ffcae0;
+      opacity: 0.5;
+    }
+
+    .app::after {
+      width: 98px;
+      height: 98px;
+      left: 20px;
+      bottom: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, 0.92), transparent 25%), rgba(121, 218, 235, 0.24);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border-radius: 28px;
+      background: rgba(255, 253, 245, 0.7);
+      border: 2px solid rgba(255, 255, 255, 0.82);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      flex: 0 0 auto;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #fff, #e8fbf3);
+      box-shadow: var(--soft-shadow);
+      position: relative;
+      transform: rotate(-4deg);
+    }
+
+    .logo::before,
+    .logo::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(64, 55, 47, 0.18);
+    }
+
+    .logo::before {
+      width: 22px;
+      height: 22px;
+      left: 12px;
+      top: 12px;
+      background: #252525;
+      box-shadow: 0 4px 8px rgba(64, 55, 47, 0.16), inset 7px 7px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .logo::after {
+      width: 18px;
+      height: 18px;
+      right: 11px;
+      bottom: 11px;
+      background: #fff;
+      border: 1px solid #e9f0ed;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 5vw, 38px);
+      line-height: 1.05;
+      color: #32434b;
+      text-shadow: 0 3px 0 rgba(255, 255, 255, 0.72);
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .game {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .board-card,
+    .side-card {
+      background: rgba(255, 253, 245, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.82);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .board-card {
+      padding: clamp(10px, 2.2vw, 18px);
+      background:
+        radial-gradient(circle at 10% 12%, rgba(255, 216, 111, 0.22), transparent 7rem),
+        radial-gradient(circle at 88% 92%, rgba(91, 198, 216, 0.16), transparent 9rem),
+        rgba(255, 253, 245, 0.92);
+    }
+
+    .board-wrap {
+      display: grid;
+      place-items: center;
+    }
+
+    #board {
+      display: grid;
+      width: min(82vw, calc(100vh - 150px), 760px);
+      aspect-ratio: 1;
+      padding: var(--board-padding);
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.38), transparent 10rem),
+        radial-gradient(circle at 74% 78%, rgba(255, 237, 161, 0.36), transparent 11rem),
+        var(--board);
+      border: 7px solid #d9fff0;
+      box-shadow:
+        inset 0 0 0 3px var(--board-dark),
+        inset 0 -12px 0 rgba(73, 188, 171, 0.12),
+        0 18px 30px rgba(75, 167, 174, 0.2);
+      touch-action: manipulation;
+      position: relative;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    #board::before,
+    #board::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    #board::before {
+      width: 72px;
+      height: 72px;
+      right: 14px;
+      top: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff, transparent 28%), rgba(255, 255, 255, 0.42);
+    }
+
+    #board::after {
+      width: 46px;
+      height: 46px;
+      left: 16px;
+      bottom: 14px;
+      border-radius: 50%;
+      background: rgba(255, 221, 113, 0.42);
+    }
+
+    #board.locked {
+      cursor: wait;
+    }
+
+    .point {
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      min-width: 0;
+      min-height: 0;
+      z-index: 1;
+      overflow: visible;
+    }
+
+    .point:disabled {
+      cursor: default;
+    }
+
+    .point::before,
+    .point::after {
+      content: "";
+      position: absolute;
+      background: var(--line);
+      opacity: 0.72;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .point::before {
+      width: 100%;
+      height: 2px;
+      top: calc(50% - 1px);
+      left: 0;
+    }
+
+    .point::after {
+      width: 2px;
+      height: 100%;
+      left: calc(50% - 1px);
+      top: 0;
+    }
+
+    .point.edge-left::before {
+      left: 50%;
+      width: 50%;
+    }
+
+    .point.edge-right::before {
+      width: 50%;
+    }
+
+    .point.edge-top::after {
+      top: 50%;
+      height: 50%;
+    }
+
+    .point.edge-bottom::after {
+      height: 50%;
+    }
+
+    .star {
+      position: absolute;
+      width: clamp(5px, 1.1vw, 8px);
+      height: clamp(5px, 1.1vw, 8px);
+      border-radius: 50%;
+      background: #ff9ab0;
+      opacity: 0.92;
+      pointer-events: none;
+      z-index: 1;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.38);
+    }
+
+    .connector {
+      position: absolute;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.92;
+      filter: drop-shadow(0 5px 5px rgba(52, 94, 104, 0.08));
+    }
+
+    .connector.black {
+      background:
+        radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.12), transparent 34%),
+        #182228;
+    }
+
+    .connector.white {
+      background:
+        radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.85), transparent 38%),
+        #f3fbfb;
+      box-shadow: inset 0 0 0 1px rgba(117, 161, 169, 0.12);
+    }
+
+    .connector.horizontal {
+      left: 50%;
+      top: 50%;
+      width: 100%;
+      height: 62%;
+      transform: translateY(-50%);
+      border-radius: 999px;
+    }
+
+    .connector.vertical {
+      left: 50%;
+      top: 50%;
+      width: 62%;
+      height: 100%;
+      transform: translateX(-50%);
+      border-radius: 999px;
+    }
+
+    .stone {
+      width: 82%;
+      height: 82%;
+      border-radius: 50%;
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 7px 0 rgba(52, 94, 104, 0.16), 0 10px 16px rgba(52, 94, 104, 0.18);
+      animation: stonePop 260ms cubic-bezier(0.2, 1.35, 0.34, 1);
+      color: #263238;
+    }
+
+    .stone::before,
+    .stone::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .stone::before {
+      width: 10%;
+      height: 12%;
+      left: 30%;
+      top: 36%;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 210% 0 0 currentColor;
+      opacity: 0.9;
+    }
+
+    .stone::after {
+      width: 24%;
+      height: 12%;
+      left: 38%;
+      top: 53%;
+      border-bottom: 2px solid currentColor;
+      border-radius: 0 0 999px 999px;
+      opacity: 0.74;
+    }
+
+    .stone.worried::before {
+      width: 9%;
+      height: 9%;
+      top: 37%;
+      box-shadow: 230% 0 0 currentColor;
+      transform: rotate(8deg);
+      opacity: 0.95;
+    }
+
+    .stone.worried::after {
+      width: 26%;
+      height: 10%;
+      left: 37%;
+      top: 59%;
+      border-top: 2px solid currentColor;
+      border-bottom: 0;
+      border-radius: 999px 999px 0 0;
+      opacity: 0.78;
+    }
+
+    .stone.scared {
+      animation: stonePop 260ms cubic-bezier(0.2, 1.35, 0.34, 1), scaredPulse 760ms ease-in-out infinite;
+    }
+
+    .stone.scared::before {
+      width: 15%;
+      height: 18%;
+      left: 26%;
+      top: 31%;
+      box-shadow: 220% 0 0 currentColor;
+      transform: none;
+      opacity: 1;
+    }
+
+    .stone.scared::after {
+      width: 18%;
+      height: 22%;
+      left: 41%;
+      top: 56%;
+      border: 0;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.88;
+    }
+
+    .stone.black {
+      background:
+        radial-gradient(circle at 25% 62%, rgba(255, 145, 167, 0.5) 0 7%, transparent 8%),
+        radial-gradient(circle at 75% 62%, rgba(255, 145, 167, 0.5) 0 7%, transparent 8%),
+        radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.25), transparent 20%),
+        radial-gradient(circle at 58% 68%, #263238, #182228 62%, #10171c 100%);
+      color: #fff;
+    }
+
+    .stone.white {
+      background:
+        radial-gradient(circle at 25% 62%, rgba(255, 155, 177, 0.54) 0 7%, transparent 8%),
+        radial-gradient(circle at 75% 62%, rgba(255, 155, 177, 0.54) 0 7%, transparent 8%),
+        radial-gradient(circle at 32% 24%, #fff, #fffaf2 40%, #f1f7f6 100%);
+      border: 1px solid rgba(117, 161, 169, 0.18);
+      color: #455a64;
+    }
+
+    .stone.captured {
+      animation: captureBlink 420ms ease-in forwards;
+      z-index: 4;
+    }
+
+    .stone.captured.worried {
+      animation: captureWorried 520ms cubic-bezier(0.25, 1.35, 0.36, 1) forwards;
+    }
+
+    .stone.captured.scared {
+      animation: captureScared 640ms cubic-bezier(0.25, 1.35, 0.36, 1) forwards;
+    }
+
+    .soul {
+      position: absolute;
+      left: 42%;
+      top: 22%;
+      width: 18%;
+      height: 18%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+      pointer-events: none;
+      animation: soulFloat 620ms ease-out forwards;
+    }
+
+    .last-move .stone {
+      outline: 3px solid rgba(255, 216, 111, 0.95);
+      outline-offset: 2px;
+    }
+
+    @keyframes stonePop {
+      0% {
+        transform: translateY(-8px) scale(0.36);
+        opacity: 0;
+      }
+      62% {
+        transform: translateY(2px) scale(1.13);
+      }
+      84% {
+        transform: translateY(-1px) scale(0.96);
+      }
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes captureBlink {
+      0% {
+        transform: translateY(0) rotate(0) scale(1);
+        opacity: 1;
+      }
+      55% {
+        transform: translateY(-9px) rotate(8deg) scale(1.12);
+        opacity: 0.85;
+      }
+      100% {
+        transform: translateY(-18px) rotate(-14deg) scale(0.2);
+        opacity: 0;
+      }
+    }
+
+    @keyframes captureWorried {
+      0% {
+        transform: translate(0, 0) rotate(0) scale(1);
+        opacity: 1;
+      }
+      34% {
+        transform: translate(-4px, -6px) rotate(-7deg) scale(1.12);
+      }
+      66% {
+        transform: translate(5px, -13px) rotate(9deg) scale(0.78);
+        opacity: 0.75;
+      }
+      100% {
+        transform: translate(0, -24px) rotate(-12deg) scale(0.15);
+        opacity: 0;
+      }
+    }
+
+    @keyframes captureScared {
+      0% {
+        transform: translate(0, 0) rotate(0) scale(1);
+        opacity: 1;
+      }
+      22% {
+        transform: translate(4px, -7px) rotate(10deg) scale(1.18);
+      }
+      44% {
+        transform: translate(-5px, 1px) rotate(-12deg) scale(0.94);
+      }
+      72% {
+        transform: translate(3px, -20px) rotate(16deg) scale(0.58);
+        opacity: 0.75;
+      }
+      100% {
+        transform: translate(0, -34px) rotate(-18deg) scale(0.08);
+        opacity: 0;
+      }
+    }
+
+    @keyframes soulFloat {
+      0% {
+        transform: translate(0, 0) scale(0.5);
+        opacity: 0;
+      }
+      35% {
+        opacity: 1;
+      }
+      100% {
+        transform: translate(8px, -34px) scale(1.25);
+        opacity: 0;
+      }
+    }
+
+    @keyframes scaredPulse {
+      0%,
+      100% {
+        filter: saturate(1);
+      }
+      50% {
+        filter: saturate(1.25) brightness(1.05);
+      }
+    }
+
+    .side {
+      display: grid;
+      gap: 14px;
+    }
+
+    .side-card {
+      padding: 16px;
+    }
+
+    .turn-card {
+      background:
+        radial-gradient(circle at 88% 10%, rgba(255, 216, 111, 0.3), transparent 5rem),
+        linear-gradient(135deg, #fffdf5, var(--panel-strong));
+    }
+
+    .turn-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .turn-label {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .turn-name {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+      color: #254c58;
+    }
+
+    .turn-stone {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      box-shadow: 0 7px 0 rgba(52, 94, 104, 0.14), 0 10px 14px rgba(52, 94, 104, 0.14);
+      position: relative;
+    }
+
+    .turn-stone::before,
+    .turn-stone::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .turn-stone::before {
+      width: 5px;
+      height: 6px;
+      left: 14px;
+      top: 17px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 12px 0 0 currentColor;
+    }
+
+    .turn-stone::after {
+      width: 12px;
+      height: 6px;
+      left: 16px;
+      top: 25px;
+      border-bottom: 2px solid currentColor;
+      border-radius: 0 0 999px 999px;
+    }
+
+    .turn-stone.black {
+      background: #151515;
+      color: #fff;
+    }
+
+    .turn-stone.white {
+      background: #fff;
+      border: 1px solid #d8e9ec;
+      color: #455a64;
+    }
+
+    .status {
+      min-height: 42px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: #e8f9ff;
+      color: #24616e;
+      font-weight: 900;
+      line-height: 1.35;
+      border: 2px dashed rgba(91, 198, 216, 0.34);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 18px;
+      background: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: inset 0 -4px 0 rgba(91, 198, 216, 0.08);
+    }
+
+    .stat b {
+      display: block;
+      font-size: 22px;
+      margin-top: 5px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .control-wide {
+      grid-column: 1 / -1;
+    }
+
+    .select-row {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    select,
+    .btn {
+      min-height: 46px;
+      border-radius: 999px;
+      border: 0;
+      color: var(--ink);
+      background: #fff;
+      box-shadow: 0 5px 0 rgba(83, 157, 166, 0.18);
+    }
+
+    select {
+      width: 100%;
+      padding: 0 12px;
+      border: 2px solid rgba(91, 198, 216, 0.18);
+      font-weight: 800;
+      background: #ffffff;
+    }
+
+    .btn {
+      min-height: 52px;
+      padding: 0 15px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 0 rgba(83, 157, 166, 0.2);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(83, 157, 166, 0.18);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 0 var(--accent-dark);
+    }
+
+    .danger {
+      background: var(--danger);
+      color: #fff;
+      box-shadow: 0 4px 0 #d85d72;
+    }
+
+    .tip-title {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .tip {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .score-box {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: #fff;
+      border: 2px solid rgba(91, 198, 216, 0.14);
+      line-height: 1.55;
+    }
+
+    .score-box.show {
+      display: block;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(54, 66, 74, 0.28);
+      z-index: 20;
+    }
+
+    .modal.show {
+      display: grid;
+    }
+
+    .modal-card {
+      width: min(460px, 100%);
+      padding: 22px;
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: 0 22px 60px rgba(52, 94, 104, 0.24);
+      border: 2px solid rgba(255, 255, 255, 0.86);
+    }
+
+    .modal-card h2 {
+      margin: 0 0 10px;
+      font-size: 26px;
+    }
+
+    .modal-card p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .mini-rules {
+      padding-left: 20px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        padding: 14px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .game {
+        grid-template-columns: 1fr;
+      }
+
+      #board {
+        width: min(94vw, calc(100vh - 260px));
+      }
+
+      .side {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .topbar {
+        display: block;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .subtitle {
+        font-size: 14px;
+      }
+
+      #board {
+        border-width: 4px;
+        border-radius: 16px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .btn {
+        padding: 0 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>围棋小乐园</h1>
+          <p class="subtitle">你是黑棋小队，白棋小队由 AI 陪你练。点一下交叉点就能开玩。</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="game" aria-label="围棋小游戏">
+      <div class="board-card">
+        <div class="board-wrap">
+          <div id="board" aria-label="围棋棋盘"></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="side-card turn-card">
+          <div class="turn-row">
+            <div>
+              <div class="turn-label">当前回合</div>
+              <p class="turn-name" id="turnName">黑棋下</p>
+            </div>
+            <div class="turn-stone black" id="turnStone" aria-hidden="true"></div>
+          </div>
+          <div class="status" id="statusText">轮到你啦，点一个交叉点试试。</div>
+          <div class="score-box" id="scoreBox"></div>
+        </section>
+
+        <section class="side-card">
+          <div class="select-row">
+            <label for="boardSize">棋盘大小</label>
+            <select id="boardSize">
+              <option value="9">9 路：迷你练习</option>
+              <option value="13">13 路：轻松小局</option>
+              <option value="19" selected>19 路：完整棋盘</option>
+            </select>
+          </div>
+
+          <div class="stats" aria-label="对局信息">
+            <div class="stat">黑棋吃子<b id="blackCaptures">0</b></div>
+            <div class="stat">白棋吃子<b id="whiteCaptures">0</b></div>
+            <div class="stat">小棋盘<b id="sizeText">19 路</b></div>
+            <div class="stat">连续 Pass<b id="passText">0</b></div>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <div class="controls">
+            <button class="btn" id="undoBtn">悔一步</button>
+            <button class="btn primary" id="passBtn">先跳过</button>
+            <button class="btn danger" id="resignBtn">我认输</button>
+            <button class="btn" id="restartBtn">再来一局</button>
+            <button class="btn control-wide" id="helpBtn">新手提示</button>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <h2 class="tip-title">小提示</h2>
+          <p class="tip" id="ruleTip">围住更多小空地就很棒。棋子上下左右的空点叫“气”，没气就会被吃掉。</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <div class="modal show" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal-card">
+      <h2 id="helpTitle">30 秒开玩</h2>
+      <p>你执黑先下，点击棋盘交叉点即可落子。先不用想太多，围住小空地、吃掉没气的白棋就好。</p>
+      <ol class="mini-rules">
+        <li>棋子旁边上下左右的空点是“气”。</li>
+        <li>一串棋没有气，就会被对方吃掉。</li>
+        <li>不能下会让自己立刻没气的自杀棋。</li>
+        <li>双方连续 Pass 后，会粗略按中国规则数棋子和围空。</li>
+      </ol>
+      <button class="btn primary control-wide" id="closeHelpBtn">开始玩</button>
+    </div>
+  </div>
+
+  <script>
+    const EMPTY = 0;
+    const BLACK = 1;
+    const WHITE = 2;
+    const PLAYER = BLACK;
+    const AI = WHITE;
+
+    const boardEl = document.getElementById("board");
+    const boardSizeEl = document.getElementById("boardSize");
+    const turnNameEl = document.getElementById("turnName");
+    const turnStoneEl = document.getElementById("turnStone");
+    const statusTextEl = document.getElementById("statusText");
+    const blackCapturesEl = document.getElementById("blackCaptures");
+    const whiteCapturesEl = document.getElementById("whiteCaptures");
+    const sizeTextEl = document.getElementById("sizeText");
+    const passTextEl = document.getElementById("passText");
+    const scoreBoxEl = document.getElementById("scoreBox");
+    const ruleTipEl = document.getElementById("ruleTip");
+    const undoBtn = document.getElementById("undoBtn");
+    const passBtn = document.getElementById("passBtn");
+    const resignBtn = document.getElementById("resignBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const helpBtn = document.getElementById("helpBtn");
+    const helpModal = document.getElementById("helpModal");
+    const closeHelpBtn = document.getElementById("closeHelpBtn");
+
+    let boardSize = 19;
+    let board = [];
+    let currentPlayer = PLAYER;
+    let captures = { [BLACK]: 0, [WHITE]: 0 };
+    let consecutivePasses = 0;
+    let gameOver = false;
+    let aiThinking = false;
+    let lastMove = null;
+    let koPoint = null;
+    let history = [];
+    let feedbackTimers = [];
+
+    const ruleTips = [
+      "围住更多小空地就很棒。棋子上下左右的空点叫“气”，没气就会被吃掉。",
+      "让白棋最后一口气消失，就能开心吃掉它，右侧吃子数会增加。",
+      "不能把自己的棋下到马上没气的位置，除非这一步能吃掉对方棋。",
+      "遇到打劫时，不能立刻打回去，要先去别处下一手。",
+      "暂时没有好点子时可以先跳过。双方连续跳过后就会开始数地盘。"
+    ];
+
+    function createEmptyBoard(size) {
+      return Array.from({ length: size }, () => Array(size).fill(EMPTY));
+    }
+
+    function copyBoard(source) {
+      return source.map(row => row.slice());
+    }
+
+    function startNewGame(size = boardSize) {
+      boardSize = size;
+      board = createEmptyBoard(boardSize);
+      currentPlayer = PLAYER;
+      captures = { [BLACK]: 0, [WHITE]: 0 };
+      consecutivePasses = 0;
+      gameOver = false;
+      aiThinking = false;
+      lastMove = null;
+      koPoint = null;
+      history = [];
+      scoreBoxEl.classList.remove("show");
+      scoreBoxEl.textContent = "";
+      clearFeedbackTimers();
+      renderBoard();
+      updateUi("新一局开始啦。你执黑先手，轮到你啦。");
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      const visualState = analyzeBoardGroups();
+      const cellCount = boardSize;
+      const padding = boardSize === 19 ? "4.2%" : boardSize === 13 ? "5%" : "6.5%";
+      boardEl.style.setProperty("--board-padding", padding);
+      boardEl.style.gridTemplateColumns = `repeat(${cellCount}, 1fr)`;
+      boardEl.style.gridTemplateRows = `repeat(${cellCount}, 1fr)`;
+
+      for (let y = 0; y < boardSize; y += 1) {
+        for (let x = 0; x < boardSize; x += 1) {
+          const point = document.createElement("button");
+          point.type = "button";
+          point.className = "point";
+          point.dataset.x = x;
+          point.dataset.y = y;
+          point.setAttribute("aria-label", `${x + 1} 列 ${y + 1} 行`);
+          if (x === 0) point.classList.add("edge-left");
+          if (x === boardSize - 1) point.classList.add("edge-right");
+          if (y === 0) point.classList.add("edge-top");
+          if (y === boardSize - 1) point.classList.add("edge-bottom");
+          if (lastMove && lastMove.x === x && lastMove.y === y) point.classList.add("last-move");
+
+          if (isStarPoint(x, y)) {
+            const star = document.createElement("span");
+            star.className = "star";
+            point.appendChild(star);
+          }
+
+          if (board[y][x] !== EMPTY) {
+            const colorName = board[y][x] === BLACK ? "black" : "white";
+            if (hasSameColorStone(x + 1, y, board[y][x])) {
+              const connector = document.createElement("span");
+              connector.className = `connector horizontal ${colorName}`;
+              point.appendChild(connector);
+            }
+            if (hasSameColorStone(x, y + 1, board[y][x])) {
+              const connector = document.createElement("span");
+              connector.className = `connector vertical ${colorName}`;
+              point.appendChild(connector);
+            }
+            const stone = document.createElement("span");
+            const expression = visualState.get(pointKey(x, y)) || "happy";
+            stone.className = `stone ${colorName} ${expression}`;
+            point.appendChild(stone);
+          }
+
+          point.addEventListener("click", () => handlePlayerMove(x, y));
+          boardEl.appendChild(point);
+        }
+      }
+    }
+
+    function isStarPoint(x, y) {
+      const starsBySize = {
+        9: [2, 4, 6],
+        13: [3, 6, 9],
+        19: [3, 9, 15]
+      };
+      const stars = starsBySize[boardSize] || [];
+      if (!stars.includes(x) || !stars.includes(y)) return false;
+      return true;
+    }
+
+    function analyzeBoardGroups() {
+      const expressions = new Map();
+      const visited = new Set();
+
+      for (let y = 0; y < boardSize; y += 1) {
+        for (let x = 0; x < boardSize; x += 1) {
+          const key = pointKey(x, y);
+          if (board[y][x] === EMPTY || visited.has(key)) continue;
+          const group = getGroup(board, x, y);
+          const expression = expressionForLiberties(group.liberties.size);
+          for (const stone of group.stones) {
+            visited.add(pointKey(stone.x, stone.y));
+            expressions.set(pointKey(stone.x, stone.y), expression);
+          }
+        }
+      }
+
+      return expressions;
+    }
+
+    function expressionForLiberties(liberties) {
+      if (liberties <= 1) return "scared";
+      if (liberties === 2) return "worried";
+      return "happy";
+    }
+
+    function hasSameColorStone(x, y, color) {
+      return isOnBoard(x, y) && board[y][x] === color;
+    }
+
+    function handlePlayerMove(x, y) {
+      if (gameOver || aiThinking || currentPlayer !== PLAYER) return;
+      const result = playMove(x, y, PLAYER, true);
+      if (!result.ok) {
+        updateUi(result.message);
+        return;
+      }
+      const message = result.captures > 0
+        ? `吃掉 ${result.captures} 颗白棋！白棋正在想想。`
+        : "黑棋落下啦，白棋正在想想。";
+      afterSuccessfulMove(message, result.capturedStones);
+      scheduleAiMove();
+    }
+
+    function playMove(x, y, color, saveHistory) {
+      if (!isOnBoard(x, y)) return { ok: false, message: "这个点跑到棋盘外啦。" };
+      if (board[y][x] !== EMPTY) return { ok: false, message: "这里已经有小棋子啦，换个交叉点吧。" };
+      if (koPoint && koPoint.x === x && koPoint.y === y) {
+        return { ok: false, message: "这里正在打劫，要先去别处下一手。" };
+      }
+
+      const previous = snapshot();
+      const testBoard = copyBoard(board);
+      const opponent = opposite(color);
+      testBoard[y][x] = color;
+      let capturedStones = [];
+
+      for (const neighbor of getNeighbors(x, y)) {
+        if (testBoard[neighbor.y][neighbor.x] !== opponent) continue;
+        const group = getGroup(testBoard, neighbor.x, neighbor.y);
+        if (group.liberties.size === 0) {
+          const expression = expressionForLiberties(getGroup(board, neighbor.x, neighbor.y).liberties.size);
+          capturedStones = capturedStones.concat(group.stones.map(stone => ({ ...stone, color: opponent, expression })));
+        }
+      }
+
+      for (const stone of capturedStones) {
+        testBoard[stone.y][stone.x] = EMPTY;
+      }
+
+      const ownGroup = getGroup(testBoard, x, y);
+      if (ownGroup.liberties.size === 0) {
+        return { ok: false, message: "这一步会让自己的棋没气，换个更舒服的位置吧。" };
+      }
+
+      if (saveHistory) history.push(previous);
+      board = testBoard;
+      captures[color] += capturedStones.length;
+      consecutivePasses = 0;
+      lastMove = { x, y, color };
+      koPoint = findKoPoint(capturedStones, ownGroup, x, y);
+
+      return { ok: true, captures: capturedStones.length, capturedStones };
+    }
+
+    function findKoPoint(capturedStones, ownGroup, x, y) {
+      if (capturedStones.length === 1 && ownGroup.stones.length === 1 && ownGroup.liberties.size === 1) {
+        return { x: capturedStones[0].x, y: capturedStones[0].y };
+      }
+      return null;
+    }
+
+    function afterSuccessfulMove(message, capturedStones = []) {
+      currentPlayer = opposite(currentPlayer);
+      renderBoard();
+      if (capturedStones.length > 0) showCaptureFeedback(capturedStones);
+      updateUi(message);
+    }
+
+    function scheduleAiMove() {
+      if (gameOver) return;
+      aiThinking = true;
+      boardEl.classList.add("locked");
+      setControlsEnabled(false);
+      window.setTimeout(() => {
+        if (!gameOver) makeAiMove();
+        aiThinking = false;
+        boardEl.classList.remove("locked");
+        setControlsEnabled(true);
+      }, 300);
+    }
+
+    function makeAiMove() {
+      if (currentPlayer !== AI) return;
+      const legalMoves = collectLegalMoves(AI);
+      if (legalMoves.length === 0) {
+        aiPass();
+        return;
+      }
+
+      const captureMoves = legalMoves.filter(move => move.captures > 0);
+      const choices = captureMoves.length > 0 ? captureMoves : legalMoves;
+      const move = choices[Math.floor(Math.random() * choices.length)];
+      const result = playMove(move.x, move.y, AI, true);
+      if (!result.ok) {
+        aiPass();
+        return;
+      }
+
+      const message = result.captures > 0
+        ? `白棋吃掉了 ${result.captures} 颗黑棋。轮到你啦。`
+        : "白棋落下啦。轮到你啦。";
+      afterSuccessfulMove(message, result.capturedStones);
+    }
+
+    function collectLegalMoves(color) {
+      const moves = [];
+      for (let y = 0; y < boardSize; y += 1) {
+        for (let x = 0; x < boardSize; x += 1) {
+          const test = simulateMove(x, y, color);
+          if (test.ok) moves.push({ x, y, captures: test.captures });
+        }
+      }
+      return moves;
+    }
+
+    function simulateMove(x, y, color) {
+      if (board[y][x] !== EMPTY) return { ok: false, captures: 0 };
+      if (koPoint && koPoint.x === x && koPoint.y === y) return { ok: false, captures: 0 };
+
+      const testBoard = copyBoard(board);
+      const opponent = opposite(color);
+      testBoard[y][x] = color;
+      let capturesCount = 0;
+
+      for (const neighbor of getNeighbors(x, y)) {
+        if (testBoard[neighbor.y][neighbor.x] !== opponent) continue;
+        const group = getGroup(testBoard, neighbor.x, neighbor.y);
+        if (group.liberties.size === 0) {
+          capturesCount += group.stones.length;
+          for (const stone of group.stones) testBoard[stone.y][stone.x] = EMPTY;
+        }
+      }
+
+      const ownGroup = getGroup(testBoard, x, y);
+      return { ok: ownGroup.liberties.size > 0, captures: capturesCount };
+    }
+
+    function passTurn() {
+      if (gameOver || aiThinking) return;
+      history.push(snapshot());
+      consecutivePasses += 1;
+      koPoint = null;
+      lastMove = null;
+      if (consecutivePasses >= 2) {
+        finishByPass();
+        return;
+      }
+      currentPlayer = opposite(currentPlayer);
+      updateUi(currentPlayer === AI ? "你先跳过啦，白棋正在想想。" : "白棋也跳过啦，轮到你啦。");
+      renderBoard();
+      if (currentPlayer === AI) scheduleAiMove();
+    }
+
+    function aiPass() {
+      history.push(snapshot());
+      consecutivePasses += 1;
+      koPoint = null;
+      lastMove = null;
+      if (consecutivePasses >= 2) {
+        finishByPass();
+        return;
+      }
+      currentPlayer = PLAYER;
+      renderBoard();
+      updateUi("白棋想了想，选择先跳过。轮到你啦。");
+    }
+
+    function finishByPass() {
+      gameOver = true;
+      currentPlayer = PLAYER;
+      const score = calculateChineseScore();
+      const winner = score.blackTotal >= score.whiteTotal ? "黑棋胜" : "白棋胜";
+      const margin = Math.abs(score.blackTotal - score.whiteTotal);
+      scoreBoxEl.innerHTML = `
+        <strong>${winner} ${margin} 目</strong><br>
+        黑棋：棋子 ${score.blackStones} + 围空 ${score.blackTerritory} = ${score.blackTotal}<br>
+        白棋：棋子 ${score.whiteStones} + 围空 ${score.whiteTerritory} = ${score.whiteTotal}
+      `;
+      scoreBoxEl.classList.add("show");
+      renderBoard();
+      updateUi("双方都跳过啦，对局结束。现在用入门版粗略数地盘。");
+    }
+
+    function resignGame() {
+      if (gameOver) return;
+      gameOver = true;
+      scoreBoxEl.innerHTML = "<strong>白棋胜</strong><br>黑棋先休息一下，本局结束。";
+      scoreBoxEl.classList.add("show");
+      updateUi("这局先休息。点“再来一局”马上重开。");
+      renderBoard();
+    }
+
+    function undoMove() {
+      if (aiThinking || history.length === 0) return;
+      const targetHistoryLength = currentPlayer === PLAYER ? Math.max(0, history.length - 2) : history.length - 1;
+      const snapshotToRestore = history[targetHistoryLength] || history[0];
+      if (!snapshotToRestore) return;
+      history = history.slice(0, targetHistoryLength);
+      restoreSnapshot(snapshotToRestore);
+      gameOver = false;
+      aiThinking = false;
+      currentPlayer = PLAYER;
+      scoreBoxEl.classList.remove("show");
+      scoreBoxEl.textContent = "";
+      renderBoard();
+      updateUi("悔一步成功，轮到你重新选择。");
+    }
+
+    function snapshot() {
+      return {
+        board: copyBoard(board),
+        currentPlayer,
+        captures: { [BLACK]: captures[BLACK], [WHITE]: captures[WHITE] },
+        consecutivePasses,
+        lastMove: lastMove ? { ...lastMove } : null,
+        koPoint: koPoint ? { ...koPoint } : null,
+        gameOver
+      };
+    }
+
+    function restoreSnapshot(state) {
+      board = copyBoard(state.board);
+      captures = { [BLACK]: state.captures[BLACK], [WHITE]: state.captures[WHITE] };
+      consecutivePasses = state.consecutivePasses;
+      lastMove = state.lastMove ? { ...state.lastMove } : null;
+      koPoint = state.koPoint ? { ...state.koPoint } : null;
+      gameOver = state.gameOver;
+    }
+
+    function calculateChineseScore() {
+      const visited = new Set();
+      let blackStones = 0;
+      let whiteStones = 0;
+      let blackTerritory = 0;
+      let whiteTerritory = 0;
+
+      for (let y = 0; y < boardSize; y += 1) {
+        for (let x = 0; x < boardSize; x += 1) {
+          const value = board[y][x];
+          if (value === BLACK) blackStones += 1;
+          if (value === WHITE) whiteStones += 1;
+        }
+      }
+
+      for (let y = 0; y < boardSize; y += 1) {
+        for (let x = 0; x < boardSize; x += 1) {
+          const key = pointKey(x, y);
+          if (board[y][x] !== EMPTY || visited.has(key)) continue;
+          const area = collectEmptyArea(x, y, visited);
+          if (area.borderColors.size === 1) {
+            if (area.borderColors.has(BLACK)) blackTerritory += area.points.length;
+            if (area.borderColors.has(WHITE)) whiteTerritory += area.points.length;
+          }
+        }
+      }
+
+      return {
+        blackStones,
+        whiteStones,
+        blackTerritory,
+        whiteTerritory,
+        blackTotal: blackStones + blackTerritory,
+        whiteTotal: whiteStones + whiteTerritory
+      };
+    }
+
+    function collectEmptyArea(startX, startY, visited) {
+      const stack = [{ x: startX, y: startY }];
+      const points = [];
+      const borderColors = new Set();
+      visited.add(pointKey(startX, startY));
+
+      while (stack.length > 0) {
+        const point = stack.pop();
+        points.push(point);
+
+        for (const neighbor of getNeighbors(point.x, point.y)) {
+          const value = board[neighbor.y][neighbor.x];
+          if (value === EMPTY) {
+            const key = pointKey(neighbor.x, neighbor.y);
+            if (!visited.has(key)) {
+              visited.add(key);
+              stack.push(neighbor);
+            }
+          } else {
+            borderColors.add(value);
+          }
+        }
+      }
+
+      return { points, borderColors };
+    }
+
+    function getGroup(sourceBoard, startX, startY) {
+      const color = sourceBoard[startY][startX];
+      const stack = [{ x: startX, y: startY }];
+      const visited = new Set([pointKey(startX, startY)]);
+      const stones = [];
+      const liberties = new Set();
+
+      while (stack.length > 0) {
+        const point = stack.pop();
+        stones.push(point);
+
+        for (const neighbor of getNeighbors(point.x, point.y)) {
+          const value = sourceBoard[neighbor.y][neighbor.x];
+          const key = pointKey(neighbor.x, neighbor.y);
+          if (value === EMPTY) {
+            liberties.add(key);
+          } else if (value === color && !visited.has(key)) {
+            visited.add(key);
+            stack.push(neighbor);
+          }
+        }
+      }
+
+      return { stones, liberties };
+    }
+
+    function getNeighbors(x, y) {
+      return [
+        { x: x - 1, y },
+        { x: x + 1, y },
+        { x, y: y - 1 },
+        { x, y: y + 1 }
+      ].filter(point => isOnBoard(point.x, point.y));
+    }
+
+    function isOnBoard(x, y) {
+      return x >= 0 && x < boardSize && y >= 0 && y < boardSize;
+    }
+
+    function opposite(color) {
+      return color === BLACK ? WHITE : BLACK;
+    }
+
+    function pointKey(x, y) {
+      return `${x},${y}`;
+    }
+
+    function updateUi(message) {
+      const isBlackTurn = currentPlayer === BLACK;
+      turnNameEl.textContent = gameOver ? "游戏结束" : isBlackTurn ? "轮到你啦" : "白棋想想中";
+      turnStoneEl.className = `turn-stone ${isBlackTurn ? "black" : "white"}`;
+      statusTextEl.textContent = message;
+      blackCapturesEl.textContent = captures[BLACK];
+      whiteCapturesEl.textContent = captures[WHITE];
+      sizeTextEl.textContent = `${boardSize} 路`;
+      passTextEl.textContent = consecutivePasses;
+      boardSizeEl.value = String(boardSize);
+      setControlsEnabled(!aiThinking && !gameOver);
+      if (gameOver) {
+        undoBtn.disabled = history.length === 0;
+        restartBtn.disabled = false;
+        helpBtn.disabled = false;
+      }
+      ruleTipEl.textContent = ruleTips[Math.floor(Math.random() * ruleTips.length)];
+    }
+
+    function setControlsEnabled(enabled) {
+      passBtn.disabled = !enabled || currentPlayer !== PLAYER;
+      resignBtn.disabled = !enabled;
+      boardSizeEl.disabled = aiThinking;
+      restartBtn.disabled = aiThinking;
+      helpBtn.disabled = false;
+      undoBtn.disabled = aiThinking || history.length === 0;
+    }
+
+    function showCaptureFeedback(capturedStones) {
+      renderBoard();
+      for (const stone of capturedStones) {
+        const point = boardEl.querySelector(`[data-x="${stone.x}"][data-y="${stone.y}"]`);
+        if (!point) continue;
+        const marker = document.createElement("span");
+        marker.className = `stone captured ${stone.color === BLACK ? "black" : "white"} ${stone.expression || "scared"}`;
+        const soul = document.createElement("span");
+        soul.className = "soul";
+        marker.appendChild(soul);
+        point.appendChild(marker);
+      }
+      const timer = window.setTimeout(renderBoard, 680);
+      feedbackTimers.push(timer);
+    }
+
+    function clearFeedbackTimers() {
+      for (const timer of feedbackTimers) window.clearTimeout(timer);
+      feedbackTimers = [];
+    }
+
+    boardSizeEl.addEventListener("change", event => {
+      startNewGame(Number(event.target.value));
+    });
+
+    passBtn.addEventListener("click", passTurn);
+    resignBtn.addEventListener("click", resignGame);
+    undoBtn.addEventListener("click", undoMove);
+    restartBtn.addEventListener("click", () => startNewGame(boardSize));
+    helpBtn.addEventListener("click", () => helpModal.classList.add("show"));
+    closeHelpBtn.addEventListener("click", () => helpModal.classList.remove("show"));
+    helpModal.addEventListener("click", event => {
+      if (event.target === helpModal) helpModal.classList.remove("show");
+    });
+
+    startNewGame(19);
+  </script>
+</body>
+</html>
